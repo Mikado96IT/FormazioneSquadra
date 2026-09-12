@@ -693,6 +693,24 @@
         benchList.appendChild(li);
       });
     }
+
+    var captainsWrap = document.getElementById("printCaptains");
+    captainsWrap.innerHTML = "";
+    var captain = state.captainId ? playerById(state.captainId) : null;
+    var vice = state.viceCaptainId ? playerById(state.viceCaptainId) : null;
+    [
+      { player: captain, label: "Capitano", cls: "" },
+      { player: vice, label: "Vice capitano", cls: "vice" }
+    ].forEach(function (entry) {
+      if (!entry.player) return;
+      var card = document.createElement("div");
+      card.className = "print-captain-card " + entry.cls;
+      card.innerHTML =
+        '<img src="' + entry.player.img + '" alt="">' +
+        '<div><p class="print-captain-label">' + entry.label + '</p>' +
+        '<p class="print-captain-name">' + entry.player.number + ". " + escapeHtml(entry.player.name) + '</p></div>';
+      captainsWrap.appendChild(card);
+    });
   }
 
   function formatDate(isoDate) {

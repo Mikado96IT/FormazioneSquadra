@@ -841,31 +841,60 @@ main#app {
   height: 17px;
   font-size: 10px;
 }
-.print-bench { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.print-bench h3 { font-size: 20px; margin: 0 0 14px; border-bottom: 3px solid #222; padding-bottom: 6px; }
-.print-bench ol { margin: 0; padding-left: 26px; columns: 2; column-gap: 28px; }
+.print-bench {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+}
+.print-bench-block {}
+.print-bench h3 { font-size: 22px; margin: 0 0 16px; border-bottom: 3px solid #222; padding-bottom: 8px; }
+.print-bench ol { margin: 0; padding-left: 30px; columns: 2; column-gap: 32px; }
 .print-bench li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-size: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-size: 18px;
   break-inside: avoid;
 }
-.print-bench li img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--anmic-blue); }
-.print-bench li .bench-number { color: #666; font-size: 13px; }
+.print-bench li img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; border: 3px solid var(--anmic-blue); }
+.print-bench li .bench-number { color: #666; font-size: 14px; }
+
+.print-captains {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.print-captains:empty { display: none; }
+.print-captain-card {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #fdf8e3;
+  border: 2px solid var(--anmic-yellow);
+}
+.print-captain-card.vice { background: #eaf5fd; border-color: var(--anmic-blue-light); }
+.print-captain-card img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.print-captain-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: #888; font-weight: 800; margin: 0 0 3px; }
+.print-captain-name { font-size: 17px; font-weight: 800; color: #222; }
 
 .print-legend {
-  margin-top: auto;
-  padding-top: 24px;
+  padding-top: 26px;
   border-top: 2px solid #eee;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 24px;
+  gap: 16px 28px;
 }
 .print-legend-title {
   grid-column: 1 / -1;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #222;
   margin-bottom: 2px;
@@ -873,15 +902,15 @@ main#app {
 .print-legend-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 11px;
+  font-size: 15px;
   color: #444;
   font-weight: 600;
 }
 .legend-chip {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   flex-shrink: 0;
   display: inline-block;
 }
