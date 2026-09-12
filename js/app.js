@@ -8,6 +8,8 @@
     formationId: null,
     starters: [],   // array parallela agli slot del modulo: id giocatore o null
     bench: [],       // array di id giocatore
+    captainId: null,
+    viceCaptainId: null,
     match: { avversario: "", data: "", ora: "", luogo: "" }
   };
 
@@ -104,6 +106,7 @@
     document.getElementById("formationBadge").textContent = f.label;
     renderPitch();
     renderBench();
+    renderRoster();
   }
 
   function showFormationPicker() {
@@ -155,24 +158,91 @@
           state.starters[index] = null;
           saveState();
           renderPitch();
+          renderRoster();
         });
         slot.appendChild(removeBtn);
-      }
 
-      var roleTag = document.createElement("span");
-      roleTag.className = "slot-role " + roleGroup(slotDef.role);
-      roleTag.textContent = slotDef.role;
-      slot.appendChild(roleTag);
+        slot.appendChild(buildCapBadges(player.id));
 
-      if (player) {
+        var roleTagOverlay = document.createElement("span");
+        roleTagOverlay.className = "slot-role tag-overlay " + roleGroup(slotDef.role);
+        roleTagOverlay.textContent = slotDef.role;
+        circle.appendChild(roleTagOverlay);
+
         var nameTag = document.createElement("span");
-        nameTag.className = "slot-name";
+        nameTag.className = "slot-name tag-overlay";
         nameTag.textContent = player.number + ". " + player.name;
-        slot.appendChild(nameTag);
+        nameTag.appendChild(capNameBadge(player.id));
+        circle.appendChild(nameTag);
+      } else {
+        var roleTag = document.createElement("span");
+        roleTag.className = "slot-role " + roleGroup(slotDef.role);
+        roleTag.textContent = slotDef.role;
+        slot.appendChild(roleTag);
       }
 
       wrap.appendChild(slot);
     });
+  }
+
+  // ---------- CAPITANO / VICE CAPITANO ----------
+
+  function setCaptain(playerId) {
+    if (state.captainId === playerId) {
+      state.captainId = null;
+    } else {
+      state.captainId = playerId;
+      if (state.viceCaptainId === playerId) state.viceCaptainId = null;
+    }
+    saveState();
+    renderPitch();
+    renderBench();
+    renderRoster();
+  }
+
+  function setViceCaptain(playerId) {
+    if (state.viceCaptainId === playerId) {
+      state.viceCaptainId = null;
+    } else {
+      state.viceCaptainId = playerId;
+      if (state.captainId === playerId) state.captainId = null;
+    }
+    saveState();
+    renderPitch();
+    renderBench();
+    renderRoster();
+  }
+
+  function buildCapBadges(playerId) {
+    var wrap = document.createElement("div");
+    wrap.className = "cap-badges";
+    var cBtn = document.createElement("button");
+    cBtn.type = "button";
+    cBtn.className = "cap-badge" + (state.captainId === playerId ? " active-c" : "");
+    cBtn.textContent = "C";
+    cBtn.title = "Capitano";
+    cBtn.addEventListener("click", function (ev) { ev.stopPropagation(); setCaptain(playerId); });
+    var vBtn = document.createElement("button");
+    vBtn.type = "button";
+    vBtn.className = "cap-badge" + (state.viceCaptainId === playerId ? " active-v" : "");
+    vBtn.textContent = "V";
+    vBtn.title = "Vice capitano";
+    vBtn.addEventListener("click", function (ev) { ev.stopPropagation(); setViceCaptain(playerId); });
+    wrap.appendChild(cBtn);
+    wrap.appendChild(vBtn);
+    return wrap;
+  }
+
+  function capNameBadge(playerId) {
+    var span = document.createElement("span");
+    if (state.captainId === playerId) {
+      span.className = "name-tag-badge c";
+      span.textContent = "C";
+    } else if (state.viceCaptainId === playerId) {
+      span.className = "name-tag-badge v";
+      span.textContent = "V";
+    }
+    return span;
   }
 
   function renderBench() {
@@ -193,6 +263,32 @@
         '<img src="' + player.img + '" alt="' + escapeHtml(player.name) + '">' +
         '<span class="bench-name">' + escapeHtml(player.name) + '</span>' +
         '<span class="bench-number">#' + player.number + '</span>';
+      li.querySelector(".bench-name").appendChild(capNameBadge(player.id));
+
+      var actions = document.createElement("div");
+      actions.className = "bench-cap-actions";
+
+      var cBtn = document.createElement("button");
+      cBtn.type = "button";
+      cBtn.className = "bench-cap-btn" + (state.captainId === player.id ? " active-c" : "");
+      cBtn.textContent = "C";
+      cBtn.title = "Capitano";
+      cBtn.addEventListener("click", function () { setCaptain(player.id); });
+
+      var vBtn = document.createElement("button");
+      vBtn.type = "button";
+      vBtn.className = "bench-cap-btn" + (state.viceCaptainId === player.id ? " active-v" : "");
+      vBtn.textContent = "V";
+      vBtn.title = "Vice capitano";
+      vBtn.addEventListener("click", function () { setViceCaptain(player.id); });
+
+      var fieldBtn = document.createElement("button");
+      fieldBtn.type = "button";
+      fieldBtn.className = "btn btn-ghost btn-tiny";
+      fieldBtn.textContent = "⚽ Campo";
+      fieldBtn.title = "Metti in campo";
+      fieldBtn.addEventListener("click", function () { placeOnPitch(player.id, index); });
+
       var removeBtn = document.createElement("button");
       removeBtn.className = "btn-icon";
       removeBtn.textContent = "×";
@@ -201,8 +297,114 @@
         state.bench.splice(index, 1);
         saveState();
         renderBench();
+        renderRoster();
       });
-      li.appendChild(removeBtn);
+
+      actions.appendChild(cBtn);
+      actions.appendChild(vBtn);
+      actions.appendChild(fieldBtn);
+      actions.appendChild(removeBtn);
+      li.appendChild(actions);
+      list.appendChild(li);
+    });
+  }
+
+  // ---------- ROSA SQUADRA (sotto la panchina) ----------
+
+  function firstEmptySlotIndex() {
+    for (var i = 0; i < state.starters.length; i++) {
+      if (!state.starters[i]) return i;
+    }
+    return -1;
+  }
+
+  function placeOnPitch(playerId, fromBenchIndex) {
+    var idx = firstEmptySlotIndex();
+    if (idx === -1) {
+      alert("Non ci sono posti liberi in campo. Rimuovi prima un giocatore dal campo.");
+      return;
+    }
+    state.starters[idx] = playerId;
+    if (fromBenchIndex != null && fromBenchIndex > -1) {
+      state.bench.splice(fromBenchIndex, 1);
+    }
+    autoFillBench();
+    saveState();
+    renderPitch();
+    renderBench();
+    renderRoster();
+  }
+
+  function addToBenchDirect(playerId) {
+    if (state.bench.indexOf(playerId) !== -1) return;
+    state.bench.push(playerId);
+    saveState();
+    renderBench();
+    renderRoster();
+  }
+
+  function renderRoster() {
+    var list = document.getElementById("rosterList");
+    if (!list) return;
+    list.innerHTML = "";
+
+    var starterIds = {};
+    state.starters.forEach(function (id) { if (id) starterIds[id] = true; });
+    var benchIds = {};
+    state.bench.forEach(function (id) { if (id) benchIds[id] = true; });
+
+    ROSTER.forEach(function (player) {
+      var li = document.createElement("li");
+      li.className = "bench-item roster-item";
+
+      var isStarter = !!starterIds[player.id];
+      var isBench = !!benchIds[player.id];
+
+      li.innerHTML =
+        '<img src="' + player.img + '" alt="' + escapeHtml(player.name) + '">' +
+        '<span class="bench-name">' + escapeHtml(player.name) + '</span>' +
+        '<span class="bench-number">#' + player.number + '</span>';
+      li.querySelector(".bench-name").appendChild(capNameBadge(player.id));
+
+      var status = document.createElement("span");
+      if (isStarter) {
+        status.className = "roster-status status-starter";
+        status.textContent = "Titolare";
+      } else if (isBench) {
+        status.className = "roster-status status-bench";
+        status.textContent = "Panchina";
+      } else {
+        status.className = "roster-status status-free";
+        status.textContent = "Disponibile";
+      }
+      li.appendChild(status);
+
+      if (!isStarter) {
+        var actions = document.createElement("div");
+        actions.className = "bench-cap-actions";
+
+        var fieldBtn = document.createElement("button");
+        fieldBtn.type = "button";
+        fieldBtn.className = "btn btn-ghost btn-tiny";
+        fieldBtn.textContent = "⚽ Campo";
+        fieldBtn.title = "Metti in campo";
+        fieldBtn.addEventListener("click", function () {
+          placeOnPitch(player.id, isBench ? state.bench.indexOf(player.id) : null);
+        });
+        actions.appendChild(fieldBtn);
+
+        if (!isBench) {
+          var benchBtn = document.createElement("button");
+          benchBtn.type = "button";
+          benchBtn.className = "btn btn-ghost btn-tiny";
+          benchBtn.textContent = "+ Panchina";
+          benchBtn.title = "Aggiungi in panchina";
+          benchBtn.addEventListener("click", function () { addToBenchDirect(player.id); });
+          actions.appendChild(benchBtn);
+        }
+        li.appendChild(actions);
+      }
+
       list.appendChild(li);
     });
   }
@@ -299,6 +501,7 @@
       }
       renderBench();
     }
+    renderRoster();
     saveState();
     closePicker();
   }
@@ -310,9 +513,6 @@
     if (!f) return;
 
     document.getElementById("printFormationBadge").textContent = f.label;
-
-    var teamName = document.getElementById("appTitle").textContent.trim() || "Formazione Titolare";
-    document.getElementById("printTitle").textContent = teamName;
 
     var m = state.match;
     var infoParts = [];
@@ -337,16 +537,34 @@
       circle.className = "slot-circle" + (player ? " filled" : "");
       circle.innerHTML = player ? playerAvatar(player) : "";
       slot.appendChild(circle);
-      var roleTag = document.createElement("span");
-      roleTag.className = "slot-role " + roleGroup(slotDef.role);
-      roleTag.textContent = slotDef.role;
-      slot.appendChild(roleTag);
-      var nameTag = document.createElement("span");
-      nameTag.className = "slot-name";
-      nameTag.style.color = "#111";
-      nameTag.style.textShadow = "none";
-      nameTag.textContent = player ? (player.number + ". " + player.name) : "-";
-      slot.appendChild(nameTag);
+
+      if (player && (state.captainId === player.id || state.viceCaptainId === player.id)) {
+        var cornerBadge = document.createElement("div");
+        cornerBadge.className = "cap-badges";
+        var staticBtn = document.createElement("span");
+        staticBtn.className = "cap-badge " + (state.captainId === player.id ? "active-c" : "active-v");
+        staticBtn.textContent = state.captainId === player.id ? "C" : "V";
+        cornerBadge.appendChild(staticBtn);
+        circle.appendChild(cornerBadge);
+      }
+
+      if (player) {
+        var roleTagOverlay = document.createElement("span");
+        roleTagOverlay.className = "slot-role tag-overlay " + roleGroup(slotDef.role);
+        roleTagOverlay.textContent = slotDef.role;
+        circle.appendChild(roleTagOverlay);
+
+        var nameTag = document.createElement("span");
+        nameTag.className = "slot-name tag-overlay";
+        nameTag.textContent = player.number + ". " + player.name;
+        nameTag.appendChild(capNameBadge(player.id));
+        circle.appendChild(nameTag);
+      } else {
+        var roleTag = document.createElement("span");
+        roleTag.className = "slot-role " + roleGroup(slotDef.role);
+        roleTag.textContent = slotDef.role;
+        slot.appendChild(roleTag);
+      }
       slotsWrap.appendChild(slot);
     });
 
@@ -362,6 +580,7 @@
         li.innerHTML = '<img src="' + player.img + '" alt="">' +
           '<span>' + escapeHtml(player.name) + '</span>' +
           '<span class="bench-number">#' + player.number + '</span>';
+        li.querySelector("span").appendChild(capNameBadge(player.id));
         benchList.appendChild(li);
       });
     }
@@ -401,9 +620,9 @@
       var imgData = canvas.toDataURL("image/jpeg", 0.95);
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({
-        orientation: "portrait",
+        orientation: "landscape",
         unit: "pt",
-        format: "a4"
+        format: "a3"
       });
       var pageWidth = pdf.internal.pageSize.getWidth();
       var pageHeight = pdf.internal.pageSize.getHeight();
@@ -415,7 +634,7 @@
         imgWidth = imgHeight / imgRatio;
       }
       var x = (pageWidth - imgWidth) / 2;
-      var y = Math.max(20, (pageHeight - imgHeight) / 2 - 40);
+      var y = (pageHeight - imgHeight) / 2;
       pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
 
       var f = currentFormation();
@@ -456,10 +675,95 @@
     });
   }
 
+  function applyLogo() {
+    var uri = window.LOGO_DATA_URI;
+    if (!uri) return;
+    ["introLogo", "logoHeader", "printLogo"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.src = uri;
+    });
+    var favicon = document.getElementById("favicon");
+    if (favicon) favicon.href = uri;
+
+    var bgUri = window.LOGIN_BG_DATA_URI;
+    if (bgUri) {
+      var introScreen = document.getElementById("introScreen");
+      if (introScreen) {
+        introScreen.style.backgroundImage =
+          "linear-gradient(180deg, rgba(3,20,40,0.55) 0%, rgba(2,15,35,0.72) 55%, rgba(0,10,25,0.88) 100%), url('" + bgUri + "')";
+      }
+    }
+  }
+
+  function enterApp() {
+    document.getElementById("introScreen").hidden = true;
+    document.getElementById("topbar").hidden = false;
+    document.getElementById("app").hidden = false;
+  }
+
+  // ---------- ACCESSO RISERVATO ----------
+  // La password non è salvata in chiaro: viene confrontata tramite l'hash
+  // SHA-256 di "utente:password", calcolato con l'API Web Crypto del browser.
+  var AUTH_SESSION_KEY = "anmic-auth-ok";
+  var CREDENTIAL_HASH = "a58a97c2e2582739bb1c1b517b0f115be1838498227c9b742f092dfb7f065a55";
+
+  function sha256Hex(text) {
+    if (!window.crypto || !window.crypto.subtle) {
+      return Promise.reject(new Error("no-subtle-crypto"));
+    }
+    var data = new TextEncoder().encode(text);
+    return window.crypto.subtle.digest("SHA-256", data).then(function (buf) {
+      var bytes = Array.from(new Uint8Array(buf));
+      return bytes.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    });
+  }
+
+  function isAlreadyLoggedIn() {
+    try {
+      return sessionStorage.getItem(AUTH_SESSION_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markLoggedIn() {
+    try { sessionStorage.setItem(AUTH_SESSION_KEY, "1"); } catch (e) { /* ignora */ }
+  }
+
+  function initLogin() {
+    if (isAlreadyLoggedIn()) {
+      enterApp();
+      return;
+    }
+    var form = document.getElementById("loginForm");
+    var errorEl = document.getElementById("loginError");
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      errorEl.textContent = "";
+      var user = document.getElementById("loginUser").value.trim();
+      var pass = document.getElementById("loginPass").value;
+      if (!user || !pass) return;
+      sha256Hex(user + ":" + pass).then(function (hash) {
+        if (hash === CREDENTIAL_HASH) {
+          markLoggedIn();
+          enterApp();
+        } else {
+          errorEl.textContent = "Nome utente o password non corretti.";
+          document.getElementById("loginPass").value = "";
+          document.getElementById("loginPass").focus();
+        }
+      }).catch(function () {
+        errorEl.textContent = "Il browser non supporta l'accesso sicuro. Aggiorna Chrome o Edge.";
+      });
+    });
+  }
+
   function init() {
+    applyLogo();
     loadState();
     renderFormationGrid();
     bindMatchInfoInputs();
+    initLogin();
 
     document.getElementById("btnCambiaModulo").addEventListener("click", showFormationPicker);
     document.getElementById("btnReset").addEventListener("click", function () {
@@ -467,9 +771,12 @@
       var f = currentFormation();
       state.starters = f ? f.slots.map(function () { return null; }) : [];
       state.bench = [];
+      state.captainId = null;
+      state.viceCaptainId = null;
       saveState();
       renderPitch();
       renderBench();
+      renderRoster();
     });
     document.getElementById("btnAddBench").addEventListener("click", function () {
       openPicker({ type: "bench", index: null });

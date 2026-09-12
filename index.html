@@ -3,14 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formazione Titolare</title>
+<title>ANMIC — Formazione Titolare</title>
+<link rel="icon" id="favicon" href="img/anmic-logo.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<header class="topbar">
+<!-- SCHERMATA INIZIALE / LOGIN -->
+<section id="introScreen" class="intro-screen">
+  <img id="introLogo" class="intro-logo" src="img/anmic-logo.png" alt="Stemma ANMIC">
+  <h1>ANMIC</h1>
+  <p class="intro-tag">Formazione Titolare</p>
+  <form id="loginForm" class="login-card" autocomplete="off">
+    <h2>Accesso riservato</h2>
+    <div class="login-field">
+      <label for="loginUser">Nome utente</label>
+      <input type="text" id="loginUser" autocomplete="username" required>
+    </div>
+    <div class="login-field">
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" autocomplete="current-password" required>
+    </div>
+    <div id="loginError" class="login-error"></div>
+    <button type="submit" class="btn btn-print">Accedi</button>
+  </form>
+</section>
+
+<header class="topbar" id="topbar" hidden>
   <div class="topbar-inner">
-    <h1 id="appTitle">Formazione Titolare</h1>
+    <div class="brand">
+      <img id="logoHeader" class="brand-logo" src="img/anmic-logo.png" alt="Stemma ANMIC">
+      <div class="brand-text">
+        <h1 id="appTitle">ANMIC</h1>
+        <span class="brand-sub">Formazione Titolare</span>
+      </div>
+    </div>
     <div class="topbar-actions">
       <button id="btnCambiaModulo" class="btn btn-ghost" hidden>Cambia modulo</button>
       <button id="btnReset" class="btn btn-ghost">Azzera</button>
@@ -18,7 +45,7 @@
   </div>
 </header>
 
-<main id="app">
+<main id="app" hidden>
 
   <!-- SCHERMATA 1: SCELTA MODULO -->
   <section id="screenFormations" class="screen">
@@ -57,11 +84,13 @@
           <span id="formationBadge" class="formation-badge"></span>
         </div>
         <div id="pitch" class="pitch">
-          <div class="pitch-lines">
-            <div class="center-circle"></div>
-            <div class="center-line"></div>
-            <div class="box box-top"></div>
-            <div class="box box-bottom"></div>
+          <div class="pitch-field">
+            <div class="pitch-lines">
+              <div class="center-circle"></div>
+              <div class="center-line"></div>
+              <div class="box box-top"></div>
+              <div class="box box-bottom"></div>
+            </div>
           </div>
           <div id="pitchSlots" class="pitch-slots"></div>
         </div>
@@ -74,6 +103,12 @@
         </div>
         <ul id="benchList" class="bench-list"></ul>
         <p id="benchEmpty" class="empty-hint">Nessun panchinaro aggiunto</p>
+
+        <div class="roster-section">
+          <h3>Rosa Squadra</h3>
+          <p class="subtitle roster-subtitle">Puoi mandare in campo o in panchina qualsiasi giocatore da qui.</p>
+          <ul id="rosterList" class="bench-list roster-list"></ul>
+        </div>
       </div>
     </div>
 
@@ -99,21 +134,27 @@
 <!-- AREA STAMPABILE (fuori schermo, usata solo per generare il PDF) -->
 <div id="printArea" class="print-area">
   <div class="print-header">
-    <h2 id="printTitle">Formazione Titolare</h2>
-    <div id="printMatchInfo" class="print-match-info"></div>
+    <img id="printLogo" class="print-logo" src="img/anmic-logo.png" alt="Stemma ANMIC">
+    <div class="print-header-text">
+      <h2 id="printTitle">ANMIC</h2>
+      <div class="print-subtitle">Formazione Titolare</div>
+      <div id="printMatchInfo" class="print-match-info"></div>
+    </div>
   </div>
   <div class="print-body">
     <div class="print-pitch-wrap">
       <span id="printFormationBadge" class="print-formation-badge"></span>
       <div id="printPitch" class="print-pitch">
-        <div class="pitch-stripe" style="top:0%"></div>
-        <div class="pitch-stripe" style="top:33.33%"></div>
-        <div class="pitch-stripe" style="top:66.66%"></div>
-        <div class="pitch-lines">
-          <div class="center-circle"></div>
-          <div class="center-line"></div>
-          <div class="box box-top"></div>
-          <div class="box box-bottom"></div>
+        <div class="print-pitch-field">
+          <div class="pitch-stripe" style="top:0%"></div>
+          <div class="pitch-stripe" style="top:33.33%"></div>
+          <div class="pitch-stripe" style="top:66.66%"></div>
+          <div class="pitch-lines">
+            <div class="center-circle"></div>
+            <div class="center-line"></div>
+            <div class="box box-top"></div>
+            <div class="box box-bottom"></div>
+          </div>
         </div>
         <div id="printPitchSlots" class="pitch-slots"></div>
       </div>
@@ -127,6 +168,7 @@
 
 <script src="js/vendor/jspdf.umd.min.js"></script>
 <script src="js/vendor/html2canvas.min.js"></script>
+<script src="js/logo.js"></script>
 <script src="js/data.js"></script>
 <script src="js/formations.js"></script>
 <script src="js/app.js"></script>
