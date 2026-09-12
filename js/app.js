@@ -701,60 +701,16 @@
     document.getElementById("app").hidden = false;
   }
 
-  // ---------- ACCESSO RISERVATO ----------
-  // La password non è salvata in chiaro: viene confrontata tramite l'hash
-  // SHA-256 di "utente:password", calcolato con l'API Web Crypto del browser.
-  var AUTH_SESSION_KEY = "anmic-auth-ok";
-  var CREDENTIAL_HASH = "a58a97c2e2582739bb1c1b517b0f115be1838498227c9b742f092dfb7f065a55";
-
-  function sha256Hex(text) {
-    if (!window.crypto || !window.crypto.subtle) {
-      return Promise.reject(new Error("no-subtle-crypto"));
-    }
-    var data = new TextEncoder().encode(text);
-    return window.crypto.subtle.digest("SHA-256", data).then(function (buf) {
-      var bytes = Array.from(new Uint8Array(buf));
-      return bytes.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
-    });
-  }
-
-  function isAlreadyLoggedIn() {
-    try {
-      return sessionStorage.getItem(AUTH_SESSION_KEY) === "1";
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function markLoggedIn() {
-    try { sessionStorage.setItem(AUTH_SESSION_KEY, "1"); } catch (e) { /* ignora */ }
-  }
-
-  function initLogin() {
-    if (isAlreadyLoggedIn()) {
-      enterApp();
-      return;
-    }
-    var form = document.getElementById("loginForm");
-    var errorEl = document.getElementById("loginError");
-    form.addEventListener("submit", function (ev) {
-      ev.preventDefault();
-      errorEl.textContent = "";
-      var user = document.getElementById("loginUser").value.trim();
-      var pass = document.getElementById("loginPass").value;
-      if (!user || !pass) return;
-      sha256Hex(user + ":" + pass).then(function (hash) {
-        if (hash === CREDENTIAL_HASH) {
-          markLoggedIn();
-          enterApp();
-        } else {
-          errorEl.textContent = "Nome utente o password non corretti.";
-          document.getElementById("loginPass").value = "";
-          document.getElementById("loginPass").focus();
-        }
-      }).catch(function () {
-        errorEl.textContent = "Il browser non supporta l'accesso sicuro. Aggiorna Chrome o Edge.";
-      });
+  // ---------- SCHERMATA INIZIALE ----------
+  // Nessun accesso riservato: si clicca/tocca il logo per entrare nel sito.
+  function initIntro() {
+    var intro = document.getElementById("introScreen");
+    intro.addEventListener("click", enterApp);
+    intro.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        enterApp();
+      }
     });
   }
 
@@ -763,9 +719,10 @@
     loadState();
     renderFormationGrid();
     bindMatchInfoInputs();
-    initLogin();
+    initIntro();
 
     document.getElementById("btnCambiaModulo").addEventListener("click", showFormationPicker);
+    document.getElementById("formationBadge").addEventListener("click", showFormationPicker);
     document.getElementById("btnReset").addEventListener("click", function () {
       if (!confirm("Vuoi azzerare la formazione e la panchina?")) return;
       var f = currentFormation();
