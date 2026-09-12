@@ -84,6 +84,18 @@ html, body {
   padding: 0 6px;
 }
 .btn-icon:hover { color: var(--anmic-red); }
+.btn-help {
+  border-color: var(--brand-yellow, #ffdd00);
+  color: var(--anmic-black);
+  background: rgba(255,221,0,0.12);
+  position: relative;
+}
+.btn-help:hover { background: rgba(255,221,0,0.22); border-color: var(--brand-yellow, #ffdd00); }
+@keyframes helpGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,221,0,0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(255,221,0,0); }
+}
+.btn-help { animation: helpGlow 2.4s ease-in-out infinite; }
 
 .topbar {
   position: sticky;
@@ -119,7 +131,7 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: radial-gradient(circle at 50% 25%, #0e7fd6 0%, #003a6b 65%, #002347 100%);
+  background: #ffffff;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -139,6 +151,41 @@ html, body {
 .intro-screen:focus-visible .intro-logo {
   transform: scale(1.05);
 }
+
+/* Uscita cinematica dalla schermata iniziale */
+.intro-screen.intro-exit {
+  animation: introScreenExit .62s cubic-bezier(.4,0,.2,1) forwards;
+  pointer-events: none;
+}
+.intro-screen.intro-exit .intro-logo {
+  animation: introLogoExit .62s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes introScreenExit {
+  0% { opacity: 1; }
+  55% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes introLogoExit {
+  0% { transform: scale(1); filter: drop-shadow(0 12px 32px rgba(0,0,0,0.45)) brightness(1); }
+  45% { transform: scale(1.18); filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5)) brightness(1.25); }
+  100% { transform: scale(2.6); filter: drop-shadow(0 0 0 rgba(0,0,0,0)) brightness(1.6); opacity: 0; }
+}
+
+/* Ingresso "cinematico" dei contenuti dopo il logo */
+@keyframes fadeDropIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(22px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.topbar.fade-drop-in { animation: fadeDropIn .5s cubic-bezier(.4,0,.2,1) both; }
+.section-heading.fade-drop-in { animation: fadeDropIn .5s cubic-bezier(.4,0,.2,1) both; animation-delay: .08s; }
+.formation-card.card-pop-in { animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both; }
+.match-info.section-pop { animation: fadeDropIn .45s cubic-bezier(.4,0,.2,1) both; }
+.pitch-wrap.section-pop { animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both; animation-delay: .08s; }
+.bench-wrap.section-pop { animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both; animation-delay: .16s; }
 
 main#app {
   max-width: 1100px;
@@ -360,11 +407,14 @@ main#app {
 .slot-role.tag-overlay {
   position: absolute;
   top: 3px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 3px;
+  left: auto;
   margin-top: 0;
   z-index: 2;
   white-space: nowrap;
+  font-size: 9px;
+  padding: 1px 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 .slot-name.tag-overlay {
   position: absolute;
@@ -589,11 +639,24 @@ main#app {
   position: fixed;
   inset: 0;
   background: rgba(10,18,30,0.6);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
   padding: 16px;
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.overlay.show { opacity: 1; }
+.overlay .picker {
+  transform: translateY(24px) scale(.96);
+  opacity: 0;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+}
+.overlay.show .picker {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 .picker {
   width: 100%;
@@ -630,6 +693,59 @@ main#app {
 .picker-item .picker-number { color: var(--text-dim); font-size: 12px; }
 .picker-empty { color: var(--text-dim); text-align: center; padding: 20px 0; font-size: 14px; }
 
+/* --- Modale scelta posizione in campo --- */
+.slot-role-chip {
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--mid);
+}
+.slot-role-chip.gk { background: var(--gk); color: var(--gk-text); }
+.slot-role-chip.back { background: var(--back); }
+.slot-role-chip.am { background: var(--am); }
+.slot-role-chip.fwd { background: var(--fwd); }
+
+/* --- Modale "Come funziona" --- */
+.howto-card { max-width: 520px; }
+.howto-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 60vh;
+  padding-right: 2px;
+}
+.howto-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--card-border);
+  opacity: 0;
+}
+.overlay.show .howto-step { animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both; }
+.howto-step:last-child { border-bottom: none; }
+.howto-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-alt);
+  border-radius: 50%;
+}
+.howto-text h4 { margin: 0 0 4px; font-size: 14px; color: var(--anmic-black); }
+.howto-text p { margin: 0; font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+.howto-gotit { width: 100%; margin-top: 14px; }
+
 /* --- Area di stampa (fuori schermo, usata per generare il PDF A3 orizzontale) --- */
 .print-area {
   position: fixed;
@@ -654,7 +770,7 @@ main#app {
 .print-header h2 { margin: 0; font-size: 32px; color: #111; letter-spacing: 1px; }
 .print-subtitle { font-size: 15px; color: #667085; font-weight: 600; margin-bottom: 8px; }
 .print-match-info { font-size: 16px; color: #333; display: flex; gap: 22px; flex-wrap: wrap; font-weight: 600; }
-.print-body { display: flex; gap: 36px; align-items: flex-start; }
+.print-body { display: flex; gap: 36px; align-items: stretch; }
 .print-pitch-wrap { flex: 0 0 560px; text-align: center; }
 .print-formation-badge {
   display: inline-block;
@@ -704,7 +820,7 @@ main#app {
 }
 .print-pitch .cap-badge { width: 22px; height: 22px; font-size: 11px; }
 .print-pitch .slot-role { font-size: 13px; padding: 2px 8px; margin-top: 6px; }
-.print-pitch .slot-role.tag-overlay { font-size: 10.5px; padding: 2px 6px; top: 3px; }
+.print-pitch .slot-role.tag-overlay { font-size: 10.5px; padding: 2px 6px; top: 3px; right: 3px; left: auto; }
 .print-pitch .slot-name {
   max-width: 148px;
   white-space: normal;
@@ -725,7 +841,7 @@ main#app {
   height: 17px;
   font-size: 10px;
 }
-.print-bench { flex: 1; min-width: 0; }
+.print-bench { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .print-bench h3 { font-size: 20px; margin: 0 0 14px; border-bottom: 3px solid #222; padding-bottom: 6px; }
 .print-bench ol { margin: 0; padding-left: 26px; columns: 2; column-gap: 28px; }
 .print-bench li {
@@ -738,3 +854,40 @@ main#app {
 }
 .print-bench li img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--anmic-blue); }
 .print-bench li .bench-number { color: #666; font-size: 13px; }
+
+.print-legend {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 2px solid #eee;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+.print-legend-title {
+  grid-column: 1 / -1;
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 2px;
+}
+.print-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #444;
+  font-weight: 600;
+}
+.legend-chip {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.legend-chip.gk { background: var(--gk); }
+.legend-chip.back { background: var(--back); }
+.legend-chip.am { background: var(--am); }
+.legend-chip.fwd { background: var(--fwd); }
+.legend-chip.cap { background: var(--anmic-yellow); border-radius: 50%; }
+.legend-chip.vice { background: var(--anmic-blue-light); border-radius: 50%; }

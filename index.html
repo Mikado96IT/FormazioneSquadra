@@ -24,6 +24,7 @@
       </div>
     </div>
     <div class="topbar-actions">
+      <button id="btnHowItWorks" class="btn btn-ghost btn-help" title="Come funziona il sito">✨ Come funziona</button>
       <button id="btnCambiaModulo" class="btn btn-ghost" hidden>Cambia modulo</button>
       <button id="btnReset" class="btn btn-ghost">Azzera</button>
     </div>
@@ -116,6 +117,29 @@
   </div>
 </div>
 
+<!-- MODALE SCELTA POSIZIONE IN CAMPO -->
+<div id="slotPickerOverlay" class="overlay" hidden>
+  <div class="picker card">
+    <div class="picker-header">
+      <h3 id="slotPickerTitle">Scegli la posizione in campo</h3>
+      <button id="slotPickerClose" class="btn-icon" aria-label="Chiudi">&times;</button>
+    </div>
+    <div id="slotPickerList" class="picker-list"></div>
+  </div>
+</div>
+
+<!-- MODALE COME FUNZIONA -->
+<div id="howToOverlay" class="overlay" hidden>
+  <div class="picker card howto-card">
+    <div class="picker-header">
+      <h3>✨ Come funziona il sito</h3>
+      <button id="howToClose" class="btn-icon" aria-label="Chiudi">&times;</button>
+    </div>
+    <div id="howToSteps" class="howto-steps"></div>
+    <button id="howToGotIt" class="btn btn-primary howto-gotit">Ho capito, si gioca!</button>
+  </div>
+</div>
+
 <!-- AREA STAMPABILE (fuori schermo, usata solo per generare il PDF) -->
 <div id="printArea" class="print-area">
   <div class="print-header">
@@ -147,6 +171,15 @@
     <div class="print-bench">
       <h3>Panchina</h3>
       <ol id="printBenchList"></ol>
+      <div class="print-legend">
+        <div class="print-legend-title">Legenda</div>
+        <div class="print-legend-row"><span class="legend-chip gk"></span> Portiere</div>
+        <div class="print-legend-row"><span class="legend-chip back"></span> Difensore</div>
+        <div class="print-legend-row"><span class="legend-chip am"></span> Centrocampista</div>
+        <div class="print-legend-row"><span class="legend-chip fwd"></span> Attaccante</div>
+        <div class="print-legend-row"><span class="legend-chip cap"></span> Capitano</div>
+        <div class="print-legend-row"><span class="legend-chip vice"></span> Vice capitano</div>
+      </div>
     </div>
   </div>
 </div>

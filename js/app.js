@@ -107,12 +107,17 @@
     renderPitch();
     renderBench();
     renderRoster();
+    retriggerAnimClass(document.querySelector("#screenBuilder .match-info"), "section-pop");
+    retriggerAnimClass(document.querySelector("#screenBuilder .pitch-wrap"), "section-pop");
+    retriggerAnimClass(document.querySelector("#screenBuilder .bench-wrap"), "section-pop");
   }
 
   function showFormationPicker() {
     document.getElementById("screenBuilder").hidden = true;
     document.getElementById("screenFormations").hidden = false;
     document.getElementById("btnCambiaModulo").hidden = true;
+    retriggerAnimClass(document.querySelector("#screenFormations .section-heading"), "fade-drop-in");
+    animateFormationCards();
   }
 
   function playerAvatar(player, big) {
@@ -318,12 +323,13 @@
     return -1;
   }
 
-  function placeOnPitch(playerId, fromBenchIndex) {
-    var idx = firstEmptySlotIndex();
-    if (idx === -1) {
-      alert("Non ci sono posti liberi in campo. Rimuovi prima un giocatore dal campo.");
-      return;
-    }
+  function emptySlotIndexes() {
+    var out = [];
+    state.starters.forEach(function (id, i) { if (!id) out.push(i); });
+    return out;
+  }
+
+  function assignToSlot(playerId, idx, fromBenchIndex) {
     state.starters[idx] = playerId;
     if (fromBenchIndex != null && fromBenchIndex > -1) {
       state.bench.splice(fromBenchIndex, 1);
@@ -333,6 +339,56 @@
     renderPitch();
     renderBench();
     renderRoster();
+  }
+
+  // Manda un giocatore in campo: se c'e' piu' di un posto libero, chiede
+  // sempre in quale ruolo/posizione schierarlo invece di sceglierlo da solo.
+  function placeOnPitch(playerId, fromBenchIndex) {
+    var f = currentFormation();
+    if (!f) return;
+    var empties = emptySlotIndexes();
+    if (empties.length === 0) {
+      alert("Non ci sono posti liberi in campo. Rimuovi prima un giocatore dal campo.");
+      return;
+    }
+    if (empties.length === 1) {
+      assignToSlot(playerId, empties[0], fromBenchIndex);
+      return;
+    }
+
+    var player = playerById(playerId);
+    slotPickerContext = { playerId: playerId, fromBenchIndex: fromBenchIndex };
+    document.getElementById("slotPickerTitle").textContent =
+      player ? "In che ruolo scende in campo " + player.name + "?" : "Scegli la posizione in campo";
+
+    var list = document.getElementById("slotPickerList");
+    list.innerHTML = "";
+    empties.forEach(function (idx) {
+      var slotDef = f.slots[idx];
+      var item = document.createElement("div");
+      item.className = "picker-item slot-picker-item";
+      var chip = document.createElement("span");
+      chip.className = "slot-role-chip " + roleGroup(slotDef.role);
+      chip.textContent = slotDef.role;
+      var label = document.createElement("span");
+      label.className = "picker-name";
+      label.textContent = "Posizione " + (idx + 1);
+      item.appendChild(chip);
+      item.appendChild(label);
+      item.addEventListener("click", function () {
+        assignToSlot(playerId, idx, fromBenchIndex);
+        closeSlotPicker();
+      });
+      list.appendChild(item);
+    });
+    openOverlay("slotPickerOverlay");
+  }
+
+  var slotPickerContext = null;
+
+  function closeSlotPicker() {
+    closeOverlay("slotPickerOverlay");
+    slotPickerContext = null;
   }
 
   function addToBenchDirect(playerId) {
@@ -413,22 +469,75 @@
 
   var pickerContext = null;
 
+  // ---------- APERTURA/CHIUSURA ANIMATA DELLE MODALI ----------
+  function openOverlay(id) {
+    var el = document.getElementById(id);
+    el.hidden = false;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        el.classList.add("show");
+      });
+    });
+  }
+
+  function closeOverlay(id) {
+    var el = document.getElementById(id);
+    el.classList.remove("show");
+    setTimeout(function () { el.hidden = true; }, 220);
+  }
+
   function openPicker(ctx) {
     pickerContext = ctx;
-    var overlay = document.getElementById("pickerOverlay");
     var title = document.getElementById("pickerTitle");
     title.textContent = ctx.type === "starter"
       ? "Seleziona giocatore - ruolo " + ctx.role
       : "Aggiungi panchinaro";
     document.getElementById("pickerSearch").value = "";
     renderPickerList("");
-    overlay.hidden = false;
+    openOverlay("pickerOverlay");
     document.getElementById("pickerSearch").focus();
   }
 
   function closePicker() {
-    document.getElementById("pickerOverlay").hidden = true;
+    closeOverlay("pickerOverlay");
     pickerContext = null;
+  }
+
+  // ---------- MODALE "COME FUNZIONA" ----------
+  var HOW_TO_STEPS = [
+    { icon: "⚙️", title: "1. Scegli il modulo", text: "Seleziona lo schieramento tattico con cui vuoi scendere in campo (es. 4-4-2, 4-3-3, 4-2-3-1...)." },
+    { icon: "🧑‍🤝‍🧑", title: "2. Piazza i giocatori", text: "Clicca su un ruolo vuoto in campo per scegliere chi ci gioca, oppure manda direttamente in campo un giocatore dalla Panchina o dalla Rosa Squadra." },
+    { icon: "🎖️", title: "3. Capitano e vice", text: "Usa i pulsanti C / V su ogni giocatore per assegnare la fascia da capitano e da vice capitano: comparirà anche sul campo e nel PDF." },
+    { icon: "🔄", title: "4. Cambia modulo al volo", text: "Clicca sul cartellino del modulo (es. 4-2-3-1) sopra il campo, oppure su \"Cambia modulo\" in alto, per cambiarlo in qualsiasi momento." },
+    { icon: "🖨️", title: "5. Stampa o scarica il PDF", text: "Quando la formazione è pronta, premi \"Stampa / Scarica PDF\" per esportare tutto pronto da condividere con la squadra." }
+  ];
+
+  function renderHowTo() {
+    var wrap = document.getElementById("howToSteps");
+    wrap.innerHTML = "";
+    HOW_TO_STEPS.forEach(function (step, i) {
+      var row = document.createElement("div");
+      row.className = "howto-step";
+      row.style.animationDelay = (i * 90) + "ms";
+      var icon = document.createElement("span");
+      icon.className = "howto-icon";
+      icon.textContent = step.icon;
+      var text = document.createElement("div");
+      text.className = "howto-text";
+      text.innerHTML = "<h4>" + step.title + "</h4><p>" + step.text + "</p>";
+      row.appendChild(icon);
+      row.appendChild(text);
+      wrap.appendChild(row);
+    });
+  }
+
+  function openHowTo() {
+    renderHowTo();
+    openOverlay("howToOverlay");
+  }
+
+  function closeHowTo() {
+    closeOverlay("howToOverlay");
   }
 
   function renderPickerList(query) {
@@ -684,21 +793,56 @@
     });
     var favicon = document.getElementById("favicon");
     if (favicon) favicon.href = uri;
-
-    var bgUri = window.LOGIN_BG_DATA_URI;
-    if (bgUri) {
-      var introScreen = document.getElementById("introScreen");
-      if (introScreen) {
-        introScreen.style.backgroundImage =
-          "linear-gradient(180deg, rgba(3,20,40,0.55) 0%, rgba(2,15,35,0.72) 55%, rgba(0,10,25,0.88) 100%), url('" + bgUri + "')";
-      }
-    }
+    // Sfondo schermata iniziale: bianco pulito (l'immagine ANMIC/Vesuvio non viene piu' usata qui).
   }
 
   function enterApp() {
-    document.getElementById("introScreen").hidden = true;
-    document.getElementById("topbar").hidden = false;
-    document.getElementById("app").hidden = false;
+    var intro = document.getElementById("introScreen");
+    if (intro.classList.contains("intro-exit")) return; // evita doppio click
+    intro.classList.add("intro-exit");
+
+    var done = false;
+    function reveal() {
+      if (done) return;
+      done = true;
+      intro.hidden = true;
+      document.getElementById("topbar").hidden = false;
+      document.getElementById("app").hidden = false;
+      playEntranceAnimation();
+    }
+    intro.addEventListener("animationend", reveal, { once: true });
+    setTimeout(reveal, 700); // rete di sicurezza se l'animazione non parte
+  }
+
+  // Ingresso "cinematico" a step dei blocchi principali dopo il click sul logo
+  function playEntranceAnimation() {
+    retriggerAnimClass(document.getElementById("topbar"), "fade-drop-in");
+    var builderVisible = !document.getElementById("screenBuilder").hidden;
+    if (builderVisible) {
+      retriggerAnimClass(document.querySelector("#screenBuilder .match-info"), "section-pop");
+      retriggerAnimClass(document.querySelector("#screenBuilder .pitch-wrap"), "section-pop");
+      retriggerAnimClass(document.querySelector("#screenBuilder .bench-wrap"), "section-pop");
+    } else {
+      retriggerAnimClass(document.querySelector("#screenFormations .section-heading"), "fade-drop-in");
+      animateFormationCards();
+    }
+  }
+
+  function retriggerAnimClass(el, cls) {
+    if (!el) return;
+    el.classList.remove(cls);
+    void el.offsetWidth; // forza il reflow per poter far ripartire l'animazione
+    el.classList.add(cls);
+  }
+
+  function animateFormationCards() {
+    var cards = document.querySelectorAll("#formationGrid .formation-card");
+    cards.forEach(function (card, i) {
+      card.classList.remove("card-pop-in");
+      void card.offsetWidth;
+      card.style.animationDelay = (i * 55) + "ms";
+      card.classList.add("card-pop-in");
+    });
   }
 
   // ---------- SCHERMATA INIZIALE ----------
@@ -745,6 +889,23 @@
     });
     document.getElementById("pickerSearch").addEventListener("input", function (ev) {
       renderPickerList(ev.target.value);
+    });
+
+    document.getElementById("btnHowItWorks").addEventListener("click", openHowTo);
+    document.getElementById("howToClose").addEventListener("click", closeHowTo);
+    document.getElementById("howToGotIt").addEventListener("click", closeHowTo);
+    document.getElementById("howToOverlay").addEventListener("click", function (ev) {
+      if (ev.target.id === "howToOverlay") closeHowTo();
+    });
+    document.getElementById("slotPickerClose").addEventListener("click", closeSlotPicker);
+    document.getElementById("slotPickerOverlay").addEventListener("click", function (ev) {
+      if (ev.target.id === "slotPickerOverlay") closeSlotPicker();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      if (!document.getElementById("howToOverlay").hidden) closeHowTo();
+      else if (!document.getElementById("slotPickerOverlay").hidden) closeSlotPicker();
+      else if (!document.getElementById("pickerOverlay").hidden) closePicker();
     });
 
     if (state.formationId && currentFormation()) {
