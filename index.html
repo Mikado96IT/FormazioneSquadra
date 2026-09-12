@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formazione Titolare</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1 id="appTitle">Formazione Titolare</h1>
+    <div class="topbar-actions">
+      <button id="btnCambiaModulo" class="btn btn-ghost" hidden>Cambia modulo</button>
+      <button id="btnReset" class="btn btn-ghost">Azzera</button>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- SCHERMATA 1: SCELTA MODULO -->
+  <section id="screenFormations" class="screen">
+    <div class="section-heading">
+      <h2>Scegli il modulo</h2>
+      <p class="subtitle">Seleziona lo schieramento con cui vuoi giocare la partita</p>
+    </div>
+    <div id="formationGrid" class="formation-grid"></div>
+  </section>
+
+  <!-- SCHERMATA 2: COSTRUZIONE FORMAZIONE -->
+  <section id="screenBuilder" class="screen" hidden>
+
+    <div class="match-info card">
+      <div class="field">
+        <label for="infAvversario">Avversario</label>
+        <input type="text" id="infAvversario" placeholder="es. Bar Sport">
+      </div>
+      <div class="field">
+        <label for="infData">Data</label>
+        <input type="date" id="infData">
+      </div>
+      <div class="field">
+        <label for="infOra">Ora</label>
+        <input type="time" id="infOra">
+      </div>
+      <div class="field">
+        <label for="infLuogo">Campo / Luogo</label>
+        <input type="text" id="infLuogo" placeholder="es. Centro Sportivo Comunale">
+      </div>
+    </div>
+
+    <div class="builder-layout">
+      <div class="pitch-wrap card">
+        <div class="pitch-header">
+          <span id="formationBadge" class="formation-badge"></span>
+        </div>
+        <div id="pitch" class="pitch">
+          <div class="pitch-lines">
+            <div class="center-circle"></div>
+            <div class="center-line"></div>
+            <div class="box box-top"></div>
+            <div class="box box-bottom"></div>
+          </div>
+          <div id="pitchSlots" class="pitch-slots"></div>
+        </div>
+      </div>
+
+      <div class="bench-wrap card">
+        <div class="bench-header">
+          <h3>Panchina</h3>
+          <button id="btnAddBench" class="btn btn-primary btn-small">+ Aggiungi</button>
+        </div>
+        <ul id="benchList" class="bench-list"></ul>
+        <p id="benchEmpty" class="empty-hint">Nessun panchinaro aggiunto</p>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <button id="btnPrint" class="btn btn-print">🖨️ Stampa / Scarica PDF</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODALE SELEZIONE GIOCATORE -->
+<div id="pickerOverlay" class="overlay" hidden>
+  <div class="picker card">
+    <div class="picker-header">
+      <h3 id="pickerTitle">Seleziona un giocatore</h3>
+      <button id="pickerClose" class="btn-icon" aria-label="Chiudi">&times;</button>
+    </div>
+    <input type="text" id="pickerSearch" class="picker-search" placeholder="Cerca per nome o numero...">
+    <div id="pickerList" class="picker-list"></div>
+  </div>
+</div>
+
+<!-- AREA STAMPABILE (fuori schermo, usata solo per generare il PDF) -->
+<div id="printArea" class="print-area">
+  <div class="print-header">
+    <h2 id="printTitle">Formazione Titolare</h2>
+    <div id="printMatchInfo" class="print-match-info"></div>
+  </div>
+  <div class="print-body">
+    <div class="print-pitch-wrap">
+      <span id="printFormationBadge" class="print-formation-badge"></span>
+      <div id="printPitch" class="print-pitch">
+        <div class="pitch-stripe" style="top:0%"></div>
+        <div class="pitch-stripe" style="top:33.33%"></div>
+        <div class="pitch-stripe" style="top:66.66%"></div>
+        <div class="pitch-lines">
+          <div class="center-circle"></div>
+          <div class="center-line"></div>
+          <div class="box box-top"></div>
+          <div class="box box-bottom"></div>
+        </div>
+        <div id="printPitchSlots" class="pitch-slots"></div>
+      </div>
+    </div>
+    <div class="print-bench">
+      <h3>Panchina</h3>
+      <ol id="printBenchList"></ol>
+    </div>
+  </div>
+</div>
+
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/html2canvas.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/formations.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
